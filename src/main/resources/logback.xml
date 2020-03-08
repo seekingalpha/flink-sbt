@@ -5,7 +5,7 @@
         </encoder>
     </appender>
 
-    <logger name="PageEvents" level="INFO"/>
+    <logger name="PageViewProcess" level="WARN"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>

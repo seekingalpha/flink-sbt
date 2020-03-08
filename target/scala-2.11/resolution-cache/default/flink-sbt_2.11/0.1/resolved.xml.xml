@@ -4,7 +4,7 @@
 		module="flink-sbt_2.11"
 		revision="0.1"
 		status="integration"
-		publication="20200305171356"
+		publication="20200308090542"
 	>
 		<description>
 		flink-sbt
@@ -39,6 +39,6 @@
 		<dependency org="org.apache.flink" name="flink-streaming-java_2.11" rev="1.10.0" conf="compile->default(compile)"/>
 		<dependency org="org.apache.flink" name="flink-clients_2.11" rev="1.10.0" conf="compile->default(compile)"/>
 		<dependency org="org.apache.flink" name="flink-connector-kinesis_2.11" rev="1.10.0" conf="compile->default(compile)"/>
-		<dependency org="org.json" name="json" rev="20190722" conf="compile->default(compile)"/>
+		<dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.10.3" conf="compile->default(compile)"/>
 	</dependencies>
 </ivy-module>
