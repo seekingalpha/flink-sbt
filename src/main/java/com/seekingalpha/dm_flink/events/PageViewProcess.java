@@ -7,26 +7,34 @@ import org.apache.flink.annotation.Public;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.tuple.Tuple14;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonParser;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.DeserializationFeature;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kinesis.FlinkKinesisConsumer;
 import org.apache.flink.streaming.connectors.kinesis.config.ConsumerConfigConstants;
 
 import org.apache.flink.api.common.functions.MapFunction;
 
+import java.io.UnsupportedEncodingException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
+
+import static com.seekingalpha.dm_flink.common.sql.*;
 //import scala.util.parsing.json.JSONObject;
 
 
@@ -79,7 +87,7 @@ public class PageViewProcess {
 //    }
 
 
-public static class Splitter implements MapFunction<String, Tuple14< String, String, String, String, String, String, String, String, String, String, String, String, Integer, String>>
+public static class PageViewSplitter implements MapFunction<String, Tuple5<String, String, Option<String>, Option<String>, Option<String>>>
     {
         final ObjectMapper mapper = new ObjectMapper()
                 .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true)
@@ -88,21 +96,41 @@ public static class Splitter implements MapFunction<String, Tuple14< String, Str
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
 
-        private static LocalDateTime offsetStringToLocalDateTime(String offsetString, String zoneName){
-            ZonedDateTime zdtNyTz = OffsetDateTime.parse(offsetString).atZoneSameInstant(ZoneId.of(zoneName));
-            return LocalDateTime.of(zdtNyTz.getYear(),zdtNyTz.getMonth(),zdtNyTz.getDayOfMonth(),zdtNyTz.getHour(),zdtNyTz.getMinute(),zdtNyTz.getSecond());
-        }
-
         @Override
-        public Tuple14< String, String, String, String, String, String, String, String, String, String, String, String, Integer, String> map(String jsonString)  throws JsonProcessingException
+        public Tuple5<String, String, Option<String>, Option<String>, Option<String>> map(String jsonString)  throws JsonProcessingException
         {
-            PageViewInputSchema pageViewInput = mapper.readValue(jsonString, PageViewInputSchema.class);
-            LocalDateTime ldtNyNoTz = offsetStringToLocalDateTime(pageViewInput.getReqTime(), "America/New_York");
+            PageViewInputSchema pageViewInput = mapper.readValue(jsonString, PageViewInputSchema.class); // parse json though setters in PageViewInputSchema
 
-            return new Tuple14<> ( ldtNyNoTz.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),pageViewInput.getUserId(),pageViewInput.getMachineCookie()
-                    ,pageViewInput.getSessionCookie() ,pageViewInput.getUserAgent(),pageViewInput.getReferrer(),pageViewInput.getReferrerKey(),pageViewInput.getUrl()
-                    ,pageViewInput.getUrlParams() ,pageViewInput.getMachineIp(),pageViewInput.getPageKey(),pageViewInput.getPageType(),pageViewInput.getPxScore()
-                    ,pageViewInput.getOther());
+            LocalDateTime ldtNyNoTz = offsetStringToLocalDateTime(pageViewInput.getReqTime(), "America/New_York");
+            String ldtNyNoTzString = ldtNyNoTz.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+            String clientType = createClientType(pageViewInput.getPageType());
+
+            Option<String> referrer;
+            try {
+                referrer = textDecoding(pageViewInput.getReferrer());
+            } catch (UnsupportedEncodingException e) {
+                referrer = Option.apply(String.format("{\"decoding_failure\":\"%s\"}", pageViewInput.getReferrer()));
+            }
+
+            Option<String> url;
+            try {
+                url = textDecoding(pageViewInput.getUrl());
+            } catch (UnsupportedEncodingException e) {
+                url = Option.apply(String.format("{\"decoding_failure\":\"%s\"}", pageViewInput.getUrl()));
+            }
+
+            Option<String> urlParams;
+            try {
+                urlParams = textDecoding(pageViewInput.getUrlParams());
+            } catch (UnsupportedEncodingException e) {
+                urlParams = Option.apply(String.format("{\"decoding_failure\":\"%s\"}", pageViewInput.getUrlParams()));
+            }
+
+
+
+
+            return new Tuple5<> (ldtNyNoTzString, clientType, referrer, url, urlParams);
         }
 
 
@@ -126,14 +154,17 @@ public static class Splitter implements MapFunction<String, Tuple14< String, Str
          * input.addSink(createSinkFromApplicationProperties())
          */
 
-        DataStream<Tuple14< String, String, String, String, String, String, String, String, String, String, String, String, Integer, String>> input2 =
-                input
-                        .map(new Splitter());
+
+        SingleOutputStreamOperator<Tuple5<String, String, Option<String>, Option<String>, Option<String>>> zz = input.map(new PageViewSplitter());
+
+        zz.print();
 
 
 
 
-        input2.print();
+
+
+
 
 //        input.addSink(createSinkFromStaticConfig());
 
