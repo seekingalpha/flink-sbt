@@ -4,6 +4,7 @@ package com.seekingalpha.dm_flink.events;
 
 import jdk.nashorn.internal.parser.JSONParser;
 import org.apache.flink.annotation.Public;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.tuple.Tuple14;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -33,7 +34,9 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
+import scala.Tuple6;
 
+import static com.seekingalpha.dm_flink.common.BaseApplication.mainTimestampFormat;
 import static com.seekingalpha.dm_flink.common.sql.*;
 //import scala.util.parsing.json.JSONObject;
 
@@ -54,7 +57,7 @@ public class PageViewProcess {
     }
 
     private static DataStream<String> createSourcePath(StreamExecutionEnvironment env) {
-        String path = "/home/maor/Documents/git/java/flink-sbt/src/test/resources/page_view/2020/03/03/15/example.json";
+        String path = "/home/maor/Documents/git/java/flink-sbt/src/test/resources/page_view/2020/03/03/15/example1.json";
         return env.readTextFile(path);
 
     }
@@ -87,7 +90,7 @@ public class PageViewProcess {
 //    }
 
 
-public static class PageViewSplitter implements MapFunction<String, Tuple5<String, String, Option<String>, Option<String>, Option<String>>>
+public static class PageViewSplitter implements MapFunction<String, Tuple6<String, String, String, String, String, Integer>>
     {
         final ObjectMapper mapper = new ObjectMapper()
                 .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true)
@@ -97,40 +100,28 @@ public static class PageViewSplitter implements MapFunction<String, Tuple5<Strin
                 .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
 
         @Override
-        public Tuple5<String, String, Option<String>, Option<String>, Option<String>> map(String jsonString)  throws JsonProcessingException
-        {
+        public Tuple6<String, String, String, String, String, Integer> map(String jsonString) throws JsonProcessingException, UnsupportedEncodingException {
             PageViewInputSchema pageViewInput = mapper.readValue(jsonString, PageViewInputSchema.class); // parse json though setters in PageViewInputSchema
 
+
             LocalDateTime ldtNyNoTz = offsetStringToLocalDateTime(pageViewInput.getReqTime(), "America/New_York");
-            String ldtNyNoTzString = ldtNyNoTz.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String ts = ldtNyNoTz.format(mainTimestampFormat);
 
             String clientType = createClientType(pageViewInput.getPageType());
 
-            Option<String> referrer;
-            try {
-                referrer = textDecoding(pageViewInput.getReferrer());
-            } catch (UnsupportedEncodingException e) {
-                referrer = Option.apply(String.format("{\"decoding_failure\":\"%s\"}", pageViewInput.getReferrer()));
-            }
+            String referrer = textDecoding(pageViewInput.getReferrer());
+            String url = textDecoding(pageViewInput.getUrl());
+            String urlParams = textDecoding(pageViewInput.getUrlParams());
 
-            Option<String> url;
-            try {
-                url = textDecoding(pageViewInput.getUrl());
-            } catch (UnsupportedEncodingException e) {
-                url = Option.apply(String.format("{\"decoding_failure\":\"%s\"}", pageViewInput.getUrl()));
-            }
+            Integer pxScore = pageViewInput.getPxScore().orElse((Integer)null);
 
-            Option<String> urlParams;
-            try {
-                urlParams = textDecoding(pageViewInput.getUrlParams());
-            } catch (UnsupportedEncodingException e) {
-                urlParams = Option.apply(String.format("{\"decoding_failure\":\"%s\"}", pageViewInput.getUrlParams()));
-            }
+            String urlFirstLevel = createUrlFirstLevel(Optional.ofNullable(url));
 
 
 
 
-            return new Tuple5<> (ldtNyNoTzString, clientType, referrer, url, urlParams);
+
+            return new Tuple6<> (ts, clientType, referrer, url, urlFirstLevel, pxScore);
         }
 
 
@@ -144,6 +135,8 @@ public static class PageViewSplitter implements MapFunction<String, Tuple5<Strin
 //        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment().setParallelism(1);
 
+
+
         /* if you would like to use runtime configuration properties, uncomment the lines below
          * DataStream<String> input = createSourceFromApplicationProperties(env);
          */
@@ -155,11 +148,13 @@ public static class PageViewSplitter implements MapFunction<String, Tuple5<Strin
          */
 
 
-        SingleOutputStreamOperator<Tuple5<String, String, Option<String>, Option<String>, Option<String>>> zz = input.map(new PageViewSplitter());
+        SingleOutputStreamOperator<Tuple6<String, String, String, String, String, Integer>> zz = input.map(new PageViewSplitter());
 
         zz.print();
 
 
+
+//        zz.writeAsCsv("/home/maor/Documents/git/java/flink-sbt/src/test/resources/page_view/2020/03/03/15/result/");
 
 
 
