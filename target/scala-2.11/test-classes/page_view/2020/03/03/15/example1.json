@@ -7,3 +7,8 @@
 {"req_time":"2020-03-03T15:14:46+00:00","machine_ip":"185.156.80.207","url":" "}
 {"req_time":"2020-03-03T15:14:46+00:00","machine_ip":"185.156.80.208","url":"/account/holdings/56797383/holdings_dialog"}
 {"req_time":"2020-03-03T15:14:46+00:00","machine_ip":"185.156.80.209","url":"/subs"}
+{"req_time":"2020-03-04T05:00:01+00:00","url":"/check_symbol"}
+{"req_time":"2020-03-04T05:00:02+00:00","machine_ip":"185.156.80.205","page_type":"ipad","url":"/symbol/ARCC/dividends/scorecard"}
+{"req_time":"2020-03-04T05:00:03+00:00","machine_ip":"185.156.80.205","page_type":"iphone","url":"/symbol/price/tpr"}
+{"req_time":"2020-03-04T05:00:04+00:00","machine_ip":"185.156.80.205","page_type":"android","url":"/symbol/price?himx/"}
+{"req_time":"2020-03-04T05:00:05+00:00","machine_ip":"185.156.80.205","page_type":"","url":"/symbol/JHB/dividends/yield"}

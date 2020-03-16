@@ -3,6 +3,7 @@ package com.seekingalpha.dm_flink.common;
 import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonSerializer;
+import org.apache.flink.shaded.zookeeper.org.apache.zookeeper.Op;
 import scala.None;
 import scala.None$;
 import scala.Option;
@@ -20,24 +21,46 @@ import java.util.Optional;
 
 public class sql {
 
+    static String mobile_web = "Mobile Web";
+    static String amp = "AMP";
+    static String desktop = "Desktop";
+    static String mobile_apple = "Mobile Apps - Apple";
+    static String mobile_android = "Mobile Apps - Android";
+    static String other = "Other";
+
     public static String createClientType(Optional<String> varNamePageType) {
         String pageType = varNamePageType.orElse("").toLowerCase().trim();
         if (pageType.contains("mobile")) {
-            return "Mobile Web";
+            return mobile_web;
         } else if (pageType.equals("responsive")) {
-            return "Mobile Web";
+            return mobile_web;
         } else if (pageType.equals("amp")) {
-            return "AMP";
+            return amp;
         } else if (pageType.equals("regular")) {
-            return "Desktop";
+            return desktop;
         } else if (pageType.contains("iphone")) {
-            return "Mobile Apps - Apple";
+            return mobile_apple;
         } else if (pageType.contains("ipad")) {
-            return "Mobile Apps - Apple";
+            return mobile_apple;
         } else if (pageType.contains("android")) {
-            return "Mobile Apps - Android";
+            return mobile_android;
         } else {
-            return "Other";
+            return other;
+        }
+    }
+
+    public static String createSymbol(Optional<String> urlFirstLevel, Optional<String> clientType, Optional<String> url) {
+        String rdyUrlFirstLevel = urlFirstLevel.orElse("").toLowerCase().trim();
+        String rdyClientType = clientType.orElse("");
+        String rdyUrl = url.orElse("");
+        if (rdyUrlFirstLevel.equals("symbol") && rdyClientType.equals(mobile_apple)) {
+            return rdyUrl.split("\\/")[3].toUpperCase();
+        } else if (rdyUrlFirstLevel.equals("symbol") && rdyClientType.equals(mobile_android)) {
+            return rdyUrl.split("\\/")[2].split("\\?")[1].toUpperCase();
+        } else if(rdyUrlFirstLevel.equals("symbol")) {
+            return rdyUrl.split("\\/")[2].toUpperCase();
+        } else {
+            return null;
         }
     }
 
@@ -74,23 +97,7 @@ public class sql {
             return null;
         }
     }
-}
-//        if (pageType.contains("mobile")) {
-//            return "Mobile Web";
-//        } else if (pageType.equals("responsive")) {
-//            return "Mobile Web";
-//        } else if (pageType.equals("amp")) {
-//            return "AMP";
-//        } else if (pageType.equals("regular")) {
-//            return "Desktop";
-//        } else if (pageType.contains("iphone")) {
-//            return "Mobile Apps - Apple";
-//        } else if (pageType.contains("ipad")) {
-//            return "Mobile Apps - Apple";
-//        } else if (pageType.contains("android")) {
-//            return "Mobile Apps - Android";
-//        } else {
-//            return "Other";
-//        }
 
+
+}
 

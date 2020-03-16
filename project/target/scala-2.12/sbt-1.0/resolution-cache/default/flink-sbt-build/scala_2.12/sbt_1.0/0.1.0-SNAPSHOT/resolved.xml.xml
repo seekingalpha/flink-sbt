@@ -4,7 +4,7 @@
 		module="flink-sbt-build"
 		revision="0.1.0-SNAPSHOT"
 		status="integration"
-		publication="20200303175847"
+		publication="20200316083733"
 		e:sbtVersion="1.0" e:scalaVersion="2.12"
 	>
 		<description>

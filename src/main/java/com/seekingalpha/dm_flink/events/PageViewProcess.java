@@ -48,6 +48,8 @@ public class PageViewProcess {
 //    private static final String inputStreamName = "production-posts";
 //    private static final String outputStreamName = "ExampleOutputStream";
 
+
+
     private static DataStream<String> createSourceFromStaticConfig(StreamExecutionEnvironment env) {
         Properties inputProperties = new Properties();
         inputProperties.setProperty(ConsumerConfigConstants.AWS_REGION, region);
@@ -57,7 +59,10 @@ public class PageViewProcess {
     }
 
     private static DataStream<String> createSourcePath(StreamExecutionEnvironment env) {
-        String path = "/home/maor/Documents/git/java/flink-sbt/src/test/resources/page_view/2020/03/03/15/example1.json";
+
+
+//        String path = "/home/maor/Documents/git/java/flink-sbt/src/test/resources/page_view/2020/03/03/15/example1.json";
+        String path = "/Users/Maor/Documents/git/java/flink-sbt/src/test/resources/page_view/2020/03/03/15/example1.json";
         return env.readTextFile(path);
 
     }
@@ -103,7 +108,6 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
         public Tuple6<String, String, String, String, String, Integer> map(String jsonString) throws JsonProcessingException, UnsupportedEncodingException {
             PageViewInputSchema pageViewInput = mapper.readValue(jsonString, PageViewInputSchema.class); // parse json though setters in PageViewInputSchema
 
-
             LocalDateTime ldtNyNoTz = offsetStringToLocalDateTime(pageViewInput.getReqTime(), "America/New_York");
             String ts = ldtNyNoTz.format(mainTimestampFormat);
 
@@ -112,10 +116,15 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
             String referrer = textDecoding(pageViewInput.getReferrer());
             String url = textDecoding(pageViewInput.getUrl());
             String urlParams = textDecoding(pageViewInput.getUrlParams());
+            String urlFirstLevel = createUrlFirstLevel(Optional.ofNullable(url));
+            String symbol = createSymbol(Optional.ofNullable(urlFirstLevel), Optional.ofNullable(clientType), Optional.ofNullable(url));
+
+            logger.warn("zzzz3:");
+            logger.warn("ts:" + ts + "; machine_ip: " + "; symbol:" + symbol + "; urlFirstLevel: " + urlFirstLevel + "; clientType: " + clientType + "; url: " + url);
 
             Integer pxScore = pageViewInput.getPxScore().orElse((Integer)null);
 
-            String urlFirstLevel = createUrlFirstLevel(Optional.ofNullable(url));
+
 
 
 
@@ -142,7 +151,6 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
          */
         DataStream<String> input = createSourcePath(env);
 
-        logger.warn("zzzz1");
         /* if you would like to use runtime configuration properties, uncomment the lines below
          * input.addSink(createSinkFromApplicationProperties())
          */

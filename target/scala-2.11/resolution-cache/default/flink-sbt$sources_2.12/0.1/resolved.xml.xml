@@ -4,7 +4,7 @@
 		module="flink-sbt$sources_2.12"
 		revision="0.1"
 		status="integration"
-		publication="20200308090545"
+		publication="20200316083910"
 	/>
 	<configurations>
 		<conf name="default" visibility="public" description=""/>
