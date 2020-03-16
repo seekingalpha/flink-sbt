@@ -27,6 +27,7 @@ public class sql {
     static String mobile_apple = "Mobile Apps - Apple";
     static String mobile_android = "Mobile Apps - Android";
     static String other = "Other";
+    static String page_view = "page_view";
 
     public static String createClientType(Optional<String> varNamePageType) {
         String pageType = varNamePageType.orElse("").toLowerCase().trim();
@@ -66,7 +67,7 @@ public class sql {
 
     public static String textDecoding(Optional<String> text) throws UnsupportedEncodingException {
         try {
-            if (text.orElse("").trim().isEmpty()) {
+            if (text.orElse("").trim().isEmpty() || text.orElse("").trim().length() <= 1) {
                 return null;
             } else {
                 return java.net.URLDecoder.decode(text.get().trim(), StandardCharsets.UTF_8.name());
@@ -74,8 +75,6 @@ public class sql {
         } catch (UnsupportedEncodingException e) {
             return String.format("{\"decoding_failure\":\"%s\"}", text.get());
         }
-
-
     }
 
     public static LocalDateTime offsetStringToLocalDateTime(String offsetString, String zoneName) {
@@ -96,6 +95,11 @@ public class sql {
         } else {
             return null;
         }
+    }
+
+    public static String createPageViewEventName(Optional<String> urlFirstLevel) {
+        String rdyUrlFirstLevel = urlFirstLevel.orElse("").equals("") ? "" : ("|" + urlFirstLevel.get());
+        return (page_view + rdyUrlFirstLevel);
     }
 
 

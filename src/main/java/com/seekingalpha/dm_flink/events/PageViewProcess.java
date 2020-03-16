@@ -118,9 +118,10 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
             String urlParams = textDecoding(pageViewInput.getUrlParams());
             String urlFirstLevel = createUrlFirstLevel(Optional.ofNullable(url));
             String symbol = createSymbol(Optional.ofNullable(urlFirstLevel), Optional.ofNullable(clientType), Optional.ofNullable(url));
+            String eventName = createPageViewEventName(Optional.ofNullable(urlFirstLevel));
 
             logger.warn("zzzz3:");
-            logger.warn("ts:" + ts + "; machine_ip: " + "; symbol:" + symbol + "; urlFirstLevel: " + urlFirstLevel + "; clientType: " + clientType + "; url: " + url);
+            logger.warn("ts:" + ts + "; machine_ip: " + "; urlFirstLevel: " + urlFirstLevel + "; eventName: " + eventName);
 
             Integer pxScore = pageViewInput.getPxScore().orElse((Integer)null);
 
