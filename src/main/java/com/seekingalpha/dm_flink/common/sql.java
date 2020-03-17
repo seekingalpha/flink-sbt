@@ -67,7 +67,7 @@ public class sql {
 
     public static String textDecoding(Optional<String> text) throws UnsupportedEncodingException {
         try {
-            if (text.orElse("").trim().isEmpty() || text.orElse("").trim().length() <= 1) {
+            if (text.orElse("").trim().isEmpty() || text.orElse("").trim().length() <= 1) { // url should never be null. checked at 2020-03-17
                 return null;
             } else {
                 return java.net.URLDecoder.decode(text.get().trim(), StandardCharsets.UTF_8.name());
@@ -84,7 +84,7 @@ public class sql {
 
     public static String createUrlFirstLevel(Optional<String> url) {
         String fixUrl = url.orElse("").toLowerCase().trim();
-        if (fixUrl.equals("/")) {
+        if (fixUrl.equals("/") || fixUrl.equals("")) { // url should never be null. checked at 2020-03-17
             return "home";
         } else if (!fixUrl.equals("")) {
             if (fixUrl.split("\\/")[1].equals("account")) {
