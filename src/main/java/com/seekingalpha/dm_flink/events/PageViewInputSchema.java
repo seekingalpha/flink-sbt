@@ -38,8 +38,8 @@ public class PageViewInputSchema {
         this.req_time = req_time;
     }
 
-    public String getUserId() {
-        return user_id;
+    public Optional<String> getUserId() {
+        return StringUtils.isEmpty(this.user_id) ? Optional.empty() : Optional.of(this.user_id.trim());
     }
 
     public void setUser_id(String user_id) {

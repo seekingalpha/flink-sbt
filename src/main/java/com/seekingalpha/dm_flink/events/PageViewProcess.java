@@ -2,6 +2,7 @@ package com.seekingalpha.dm_flink.events;
 
 
 
+import javafx.util.Pair;
 import jdk.nashorn.internal.parser.JSONParser;
 import org.apache.flink.annotation.Public;
 import org.apache.flink.api.common.ExecutionConfig;
@@ -111,23 +112,22 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
             LocalDateTime ldtNyNoTz = offsetStringToLocalDateTime(pageViewInput.getReqTime(), "America/New_York");
             String ts = ldtNyNoTz.format(mainTimestampFormat);
 
-            String clientType = createClientType(pageViewInput.getPageType());
-
             String referrer = textDecoding(pageViewInput.getReferrer());
+
+            String clientType = createClientType(pageViewInput.getPageType());
             String url = textDecoding(pageViewInput.getUrl());
             String urlParams = textDecoding(pageViewInput.getUrlParams());
             String urlFirstLevel = createUrlFirstLevel(Optional.ofNullable(url));
             String symbol = createSymbol(Optional.ofNullable(urlFirstLevel), Optional.ofNullable(clientType), Optional.ofNullable(url));
             String eventName = createPageViewEventName(Optional.ofNullable(urlFirstLevel));
 
-            logger.warn("zzzz3:");
-            logger.warn("ts:" + ts + "; machine_ip: " + "; urlFirstLevel: " + urlFirstLevel + "; eventName: " + eventName);
+            String userIdCode = createUserIdCode(pageViewInput.getUserId()); // to other_calc
+            Integer UserId = createUserId(pageViewInput.getUserId()); // Integer can hold null and should not be converted with toString()
 
             Integer pxScore = pageViewInput.getPxScore().orElse((Integer)null);
 
 
-
-
+            logger.warn("ts:" + ts + "; UserId: " + pageViewInput.getUserId() + "; userIdCode: " + userIdCode);
 
 
 
@@ -159,7 +159,7 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
 
         SingleOutputStreamOperator<Tuple6<String, String, String, String, String, Integer>> zz = input.map(new PageViewSplitter());
 
-        zz.print();
+//        zz.print();
 
 
 

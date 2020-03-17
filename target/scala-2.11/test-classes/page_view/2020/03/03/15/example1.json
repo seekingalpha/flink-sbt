@@ -12,3 +12,9 @@
 {"req_time":"2020-03-04T05:00:03+00:00","machine_ip":"185.156.80.205","page_type":"iphone","url":"/symbol/price/tpr"}
 {"req_time":"2020-03-04T05:00:04+00:00","machine_ip":"185.156.80.205","page_type":"android","url":"/symbol/price?himx/"}
 {"req_time":"2020-03-04T05:00:05+00:00","machine_ip":"185.156.80.205","page_type":"","url":"/symbol/JHB/dividends/yield"}
+{"req_time":"2020-03-04T05:00:01+00:00","url":"/check_user_id"}
+{"req_time":"2020-03-04T05:00:05+00:00","machine_ip":"185.156.80.205","user_id":"44177566"}
+{"req_time":"2020-03-04T05:00:05+00:00","machine_ip":"185.156.80.205","user_id":"u-1556909051943"}
+{"req_time":"2020-03-04T05:00:05+00:00","machine_ip":"185.156.80.205","user_id":"guid-59a16690-3beb-bd4e-4e5e-e555cf9b69a3"}
+{"req_time":"2020-03-04T05:00:05+00:00","machine_ip":"185.156.80.205","user_id":""}
+{"req_time":"2020-03-04T05:00:05+00:00","machine_ip":"185.156.80.205","user_id":" "}

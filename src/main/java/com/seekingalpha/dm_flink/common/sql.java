@@ -4,6 +4,8 @@ import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonSerializer;
 import org.apache.flink.shaded.zookeeper.org.apache.zookeeper.Op;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.None;
 import scala.None$;
 import scala.Option;
@@ -20,7 +22,7 @@ import java.util.Optional;
 
 
 public class sql {
-
+    public static Logger logger = LoggerFactory.getLogger(sql.class);
     static String mobile_web = "Mobile Web";
     static String amp = "AMP";
     static String desktop = "Desktop";
@@ -97,9 +99,34 @@ public class sql {
         }
     }
 
+    public static boolean isInteger(Object object) {
+        if(object instanceof Integer ) {
+            return true;
+        } else {
+            String string = object.toString();
+            try {
+                Integer.parseInt(string);
+            } catch(Exception e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static String createPageViewEventName(Optional<String> urlFirstLevel) {
         String rdyUrlFirstLevel = urlFirstLevel.orElse("").equals("") ? "" : ("|" + urlFirstLevel.get());
         return (page_view + rdyUrlFirstLevel);
+    }
+
+
+    public static String createUserIdCode(Optional<String> userId) {
+        String rdyUserId = userId.orElse(""); // trim already done in class schema
+        return (isInteger(rdyUserId) || rdyUserId.equals("")) ? null : rdyUserId;
+    }
+
+    public static Integer createUserId(Optional<String> userId) {
+        String rdyUserId = userId.orElse(""); // trim already done in class schema
+        return isInteger(rdyUserId) ? Integer.parseInt(rdyUserId) : null;
     }
 
 
