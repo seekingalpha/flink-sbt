@@ -18,7 +18,10 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.*;
+
+import net.minidev.json.JSONObject;
+import com.google.common.base.Splitter;
 
 
 public class sql {
@@ -30,6 +33,7 @@ public class sql {
     static String mobile_android = "Mobile Apps - Android";
     static String other = "Other";
     static String page_view = "page_view";
+    static String url_params_row = "url_params_row";
 
     public static String createClientType(Optional<String> varNamePageType) {
         String pageType = varNamePageType.orElse("").toLowerCase().trim();
@@ -127,6 +131,29 @@ public class sql {
     public static Integer createUserId(Optional<String> userId) {
         String rdyUserId = userId.orElse(""); // trim already done in class schema
         return isInteger(rdyUserId) ? Integer.parseInt(rdyUserId) : null;
+    }
+
+    public static String splitter(String text)  {
+        Map<String, String> map = Splitter.on('&').trimResults().withKeyValueSeparator('=').split(text);
+         return new JSONObject(map).toString();
+    }
+
+    public static String createUrlParam(Optional<String> urlParam) {
+        String rdyUrlParam = urlParam.orElse(""); // trim already done in decoding
+        if (rdyUrlParam.equals("") || rdyUrlParam.length() <= 1) {
+            return null;
+        } else if (!rdyUrlParam.startsWith("?")) {
+            return String.format("{\"%s\":\"%s\"}", url_params_row, rdyUrlParam);
+        } else {
+            try {
+                return splitter(rdyUrlParam.split("\\?")[1]);
+            }
+            catch(Exception e) {
+                return String.format("{\"%s\":\"%s\"}", url_params_row, rdyUrlParam);
+            }
+
+        }
+
     }
 
 

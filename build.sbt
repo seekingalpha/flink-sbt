@@ -17,8 +17,8 @@ libraryDependencies ++= {
     "org.apache.flink" %% "flink-streaming-java"         % flinkVersion,
     "org.apache.flink" %% "flink-clients"                % flinkVersion,
     "org.apache.flink" %% "flink-connector-kinesis"      % flinkVersion,
-    "com.fasterxml.jackson.core" % "jackson-core" % "2.10.3"
-//    "org.json" % "json" % "20190722"
+    "com.fasterxml.jackson.core" % "jackson-core" % "2.10.3",
+    "net.minidev" % "json-smart" % "2.3"
 //    "com.google.code.gson" % "gson" % "2.8.6"
   )
 }

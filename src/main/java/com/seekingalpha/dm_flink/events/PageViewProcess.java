@@ -116,7 +116,6 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
 
             String clientType = createClientType(pageViewInput.getPageType());
             String url = textDecoding(pageViewInput.getUrl());
-            String urlParams = textDecoding(pageViewInput.getUrlParams());
             String urlFirstLevel = createUrlFirstLevel(Optional.ofNullable(url));
             String symbol = createSymbol(Optional.ofNullable(urlFirstLevel), Optional.ofNullable(clientType), Optional.ofNullable(url));
             String eventName = createPageViewEventName(Optional.ofNullable(urlFirstLevel));
@@ -126,9 +125,15 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
 
             Integer pxScore = pageViewInput.getPxScore().orElse((Integer)null);
 
+            String urlParamsDecoded = textDecoding(pageViewInput.getUrlParams());
+            String urlParams = createUrlParam(Optional.ofNullable(urlParamsDecoded));
 
-            logger.warn("ts:" + ts + "; UserId: " + pageViewInput.getUserId() + "; userIdCode: " + userIdCode);
 
+            System.out.println("aaa1");
+            System.out.println("ts:" + ts + "; machine_ip: " + pageViewInput.getMachineIp() + "; urlParamsDecoded: " + urlParamsDecoded);
+
+            System.out.println("ts:" + ts + "; machine_ip: " + pageViewInput.getMachineIp() + "; urlParams: " + urlParams);
+            System.out.println("aaa2");
 
 
             return new Tuple6<> (ts, clientType, referrer, url, urlFirstLevel, pxScore);
