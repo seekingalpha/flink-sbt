@@ -1,6 +1,8 @@
 package com.seekingalpha.dm_flink.common;
 
 import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonSerializer;
 import org.apache.flink.shaded.zookeeper.org.apache.zookeeper.Op;
@@ -34,6 +36,10 @@ public class sql {
     static String other = "Other";
     static String page_view = "page_view";
     static String url_params_row = "url_params_row";
+
+    public static String  emptyToNull(String input) {
+        return (input == null || input.trim().isEmpty() || input.contains("{}") ) ? null : input;
+    }
 
     public static String createClientType(Optional<String> varNamePageType) {
         String pageType = varNamePageType.orElse("").toLowerCase().trim();
@@ -133,27 +139,101 @@ public class sql {
         return isInteger(rdyUserId) ? Integer.parseInt(rdyUserId) : null;
     }
 
-    public static String splitter(String text)  {
-        Map<String, String> map = Splitter.on('&').trimResults().withKeyValueSeparator('=').split(text);
-         return new JSONObject(map).toString();
+    public static String keyJsonString = "jsonString";
+    public static String keyJsonStringRow = "jsonStringRow";
+//    static String valJsonString = "jsonString";
+    public static String keyNameTrafficSourceParam = "colNameTrafficSourceParam";
+    static String valNameTrafficSourceParam = "source";
+    public static String keyNameUtmSource = "colNameUtmSource";
+    static String valNameUtmSource = "utm_source";
+    public static String keyNameUtmMeduim = "colNameUtmMeduim";
+    static String valNameUtmMeduim = "utm_meduim";
+    public static String keyNameUtmCampaign = "colNameUtmCampaign";
+    static String valNameUtmCampaign = "utm_campaign";
+    public static String keyNameUtmTerm = "colNameUtmTerm";
+    static String valNameUtmTerm = "utm_term";
+    public static String keyNameUtmContent = "colNameUtmContent";
+    static String valNameUtmContent = "utm_content";
+
+    public static HashMap<String, String> splitter(String text)  {
+        HashMap<String, String> jsonHashMap = new HashMap<>( Splitter.on('&').trimResults().withKeyValueSeparator('=').split(text) );
+        HashMap<String, String> hashMap = new HashMap<String, String>()
+        {
+            {
+                put(keyJsonStringRow, null);
+                put(keyNameTrafficSourceParam, emptyToNull(jsonHashMap.get(valNameTrafficSourceParam)));
+                put(keyNameUtmSource, emptyToNull(jsonHashMap.get(valNameUtmSource)));
+                put(keyNameUtmMeduim, emptyToNull(jsonHashMap.get(valNameUtmMeduim)));
+                put(keyNameUtmCampaign, emptyToNull(jsonHashMap.get(valNameUtmCampaign)));
+                put(keyNameUtmTerm, emptyToNull(jsonHashMap.get(valNameUtmTerm)));
+                put(keyNameUtmContent, emptyToNull(jsonHashMap.get(valNameUtmContent)));
+                put(keyJsonString, emptyToNull(new JSONObject(jsonHashMap).toString()));
+            }
+        };
+        jsonHashMap.remove(valNameTrafficSourceParam);
+        jsonHashMap.remove(valNameUtmSource);
+        jsonHashMap.remove(valNameUtmMeduim);
+        jsonHashMap.remove(valNameUtmCampaign);
+        jsonHashMap.remove(valNameUtmTerm);
+        jsonHashMap.remove(valNameUtmContent);
+
+        hashMap.put(keyJsonString, emptyToNull(new JSONObject(jsonHashMap).toString()));
+        return hashMap;
     }
 
-    public static String createUrlParam(Optional<String> urlParam) {
+    public static HashMap<String, String> emptyUarams()  {
+        return new HashMap<String,String>()
+    {
+        {
+            put(keyJsonString, null);
+            put(keyNameTrafficSourceParam, null);
+            put(keyNameUtmSource, null);
+            put(keyNameUtmMeduim, null);
+            put(keyNameUtmCampaign, null);
+            put(keyNameUtmTerm, null);
+            put(keyNameUtmContent, null);
+        }
+    };
+
+    }
+
+    public static HashMap<String, String> mappingUrlParams(Optional<String> urlParam) {
         String rdyUrlParam = urlParam.orElse(""); // trim already done in decoding
         if (rdyUrlParam.equals("") || rdyUrlParam.length() <= 1) {
-            return null;
+            HashMap<String,String> map = emptyUarams();
+            map.put(keyJsonStringRow,null);
+            return map;
         } else if (!rdyUrlParam.startsWith("?")) {
-            return String.format("{\"%s\":\"%s\"}", url_params_row, rdyUrlParam);
+            HashMap<String,String> hashMap = emptyUarams();
+            hashMap.put(keyJsonStringRow,String.format("{\"%s\":\"%s\"}", url_params_row, rdyUrlParam));
+            return hashMap;
         } else {
             try {
+                System.out.println("does_splitter_succed?");
                 return splitter(rdyUrlParam.split("\\?")[1]);
             }
             catch(Exception e) {
-                return String.format("{\"%s\":\"%s\"}", url_params_row, rdyUrlParam);
+                HashMap<String,String> hashMap = emptyUarams();
+                hashMap.put(keyJsonStringRow,String.format("{\"%s\":\"%s\"}", url_params_row, rdyUrlParam));
+                return hashMap;
+            }
+        }
+    }
+
+    public static String extractUrlParamsRow(Optional<String> urlParam) {
+        String rdyUrlParam = urlParam.orElse("");
+        if (rdyUrlParam.equals("") || rdyUrlParam.length() <= 1) {
+            return null;
+        } else {
+            JSONParser parser = new JSONParser();
+            try {
+                JSONObject json = (JSONObject) parser.parse(rdyUrlParam);
+            } catch (ParseException e) {
+                e.printStackTrace();
             }
 
+            return "zz";
         }
-
     }
 
 

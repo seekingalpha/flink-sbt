@@ -30,8 +30,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -39,6 +39,7 @@ import scala.Tuple6;
 
 import static com.seekingalpha.dm_flink.common.BaseApplication.mainTimestampFormat;
 import static com.seekingalpha.dm_flink.common.sql.*;
+
 //import scala.util.parsing.json.JSONObject;
 
 
@@ -110,33 +111,48 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
             PageViewInputSchema pageViewInput = mapper.readValue(jsonString, PageViewInputSchema.class); // parse json though setters in PageViewInputSchema
 
             LocalDateTime ldtNyNoTz = offsetStringToLocalDateTime(pageViewInput.getReqTime(), "America/New_York");
-            String ts = ldtNyNoTz.format(mainTimestampFormat);
+            String colTs = ldtNyNoTz.format(mainTimestampFormat);
 
-            String referrer = textDecoding(pageViewInput.getReferrer());
+            String colMachineIp = pageViewInput.getMachineIp();
+            String colReferrer = textDecoding(pageViewInput.getReferrer());
 
-            String clientType = createClientType(pageViewInput.getPageType());
-            String url = textDecoding(pageViewInput.getUrl());
-            String urlFirstLevel = createUrlFirstLevel(Optional.ofNullable(url));
-            String symbol = createSymbol(Optional.ofNullable(urlFirstLevel), Optional.ofNullable(clientType), Optional.ofNullable(url));
-            String eventName = createPageViewEventName(Optional.ofNullable(urlFirstLevel));
+            String colClientType = createClientType(pageViewInput.getPageType());
+            String colUrl = textDecoding(pageViewInput.getUrl());
+            String colUrlFirstLevel = createUrlFirstLevel(Optional.ofNullable(colUrl));
+            String colSymbol = createSymbol(Optional.ofNullable(colUrlFirstLevel), Optional.ofNullable(colClientType), Optional.ofNullable(colUrl));
+            String colEventName = createPageViewEventName(Optional.ofNullable(colUrlFirstLevel));
 
-            String userIdCode = createUserIdCode(pageViewInput.getUserId()); // to other_calc
-            Integer UserId = createUserId(pageViewInput.getUserId()); // Integer can hold null and should not be converted with toString()
+            String colUserIdCode = createUserIdCode(pageViewInput.getUserId()); // to other_calc
+            Integer colUserId = createUserId(pageViewInput.getUserId()); // Integer can hold null and should not be converted with toString()
 
-            Integer pxScore = pageViewInput.getPxScore().orElse((Integer)null);
+            Integer colPxScore = pageViewInput.getPxScore().orElse((Integer)null);
 
             String urlParamsDecoded = textDecoding(pageViewInput.getUrlParams());
-            String urlParams = createUrlParam(Optional.ofNullable(urlParamsDecoded));
+            Map<String,String> mapUrlParams = mappingUrlParams(Optional.ofNullable(urlParamsDecoded));
 
+            String colUrlParams = mapUrlParams.get(keyJsonString);
+            String colUrlParamsRow = mapUrlParams.get(keyJsonStringRow);
+            String colTrafficSourceParam = mapUrlParams.get(keyNameTrafficSourceParam);
+            String colUrlParamsTrafficUtmSource = mapUrlParams.get(keyNameUtmSource);
+            String colUrlParamsTrafficUtmMedium = mapUrlParams.get(keyNameUtmMeduim);
+            String colUrlParamsTrafficUtmCampaign = mapUrlParams.get(keyNameUtmCampaign);
+            String colUrlParamsTrafficUtmTerm = mapUrlParams.get(keyNameUtmTerm);
+            String colUrlParamsTrafficUtmContent = mapUrlParams.get(keyNameUtmContent);
 
             System.out.println("aaa1");
-            System.out.println("ts:" + ts + "; machine_ip: " + pageViewInput.getMachineIp() + "; urlParamsDecoded: " + urlParamsDecoded);
-
-            System.out.println("ts:" + ts + "; machine_ip: " + pageViewInput.getMachineIp() + "; urlParams: " + urlParams);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; urlParamsDecoded: " + urlParamsDecoded);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colUrlParams: " + colUrlParams);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colUrlParamsRow: " + colUrlParamsRow);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colTrafficSourceParam: " + colTrafficSourceParam);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colUrlParamsTrafficUtmSource: " + colUrlParamsTrafficUtmSource);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colUrlParamsTrafficUtmMedium: " + colUrlParamsTrafficUtmMedium);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colUrlParamsTrafficUtmCampaign: " + colUrlParamsTrafficUtmCampaign);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colUrlParamsTrafficUtmTerm: " + colUrlParamsTrafficUtmTerm);
+            System.out.println("ts:" + colTs + "; machine_ip: " + colMachineIp + "; colUrlParamsTrafficUtmContent: " + colUrlParamsTrafficUtmContent);
             System.out.println("aaa2");
 
 
-            return new Tuple6<> (ts, clientType, referrer, url, urlFirstLevel, pxScore);
+            return new Tuple6<> (colTs, colClientType, colReferrer, colUrl, colUrlFirstLevel, colPxScore);
         }
 
 
@@ -155,7 +171,7 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
         /* if you would like to use runtime configuration properties, uncomment the lines below
          * DataStream<String> input = createSourceFromApplicationProperties(env);
          */
-        DataStream<String> input = createSourcePath(env);
+        DataStream<String> input = createSourcePath(env); // createSourceFromStaticConfig(env); // createSourcePath(env);
 
         /* if you would like to use runtime configuration properties, uncomment the lines below
          * input.addSink(createSinkFromApplicationProperties())
@@ -164,7 +180,7 @@ public static class PageViewSplitter implements MapFunction<String, Tuple6<Strin
 
         SingleOutputStreamOperator<Tuple6<String, String, String, String, String, Integer>> zz = input.map(new PageViewSplitter());
 
-//        zz.print();
+        zz.print();
 
 
 
